@@ -1,0 +1,98 @@
+"""Prompts the user to select one or more config files. Selected files are diffed against a predefined set of "authority files".
+the name of each chosen config file determines which authority file it will be compared to."""
+
+#DiffConfigs v0.2
+"""New to v0.2.  Script can now handle a scenario where a user selects a file that has no corresponding authority file.
+The script will continue and the problem file is acknowledged in the report."""
+
+import sys
+import Tkinter, tkFileDialog
+import shutil
+import textwrap
+import difflib
+import os
+import time
+
+##Supress Standard Output
+so=open(os.devnull,'w')
+sys.stdout=so
+
+##File Dialog to select config files##
+root = Tkinter.Tk()
+root.withdraw()
+
+filenames = tkFileDialog.askopenfilenames(parent=root,title='Choose config files to diff...')
+filenames = root.tk.splitlist(filenames)
+
+def differ(t):   
+    auth = t.read().splitlines()                        #Divide authority file by lines         
+    t.close()
+    d = difflib.Differ()
+    diff = d.compare(auth, data)                        #Compare authority file vs. each user file
+    print "*", eachfile, "as compared to", file_name         
+    tmpa=open("tmp", "a")
+    print >>tmpa,"*", eachfile, "compared against", file_name, "\n", '\n' .join(diff)   #Join results from comparison and print
+    tmpa.close()
+    
+##Cycle through each user selected file and compare it to the appropriate authority file.  Print results
+for eachfile in filenames:
+    f=open(eachfile,"r")                                #Open each user selected file 
+    data=f.read().splitlines()                          #Divide each user selected file by lines
+    f.close()
+    
+
+    dir_path="Authority_Configs"
+    if "config1" in eachfile:                           #Open appropriate authority file 
+        file_name="text1.conf"
+        t=open(os.path.join(dir_path,file_name),"r")    #Joins relative path to filename and opens
+        differ(t)                   
+    elif "config2" in eachfile:
+        file_name="text2.conf"
+        t=open(os.path.join(dir_path,file_name),"r")
+        differ(t) 
+    elif "config3" in eachfile: 
+        tname="text3"
+        file_name="text3.conf"
+        t=open(os.path.join(dir_path,file_name),"r")
+        differ(t) 
+    elif "asl" in eachfile: 
+        file_name="asl.conf"
+        t=open(os.path.join(dir_path,file_name),"r")
+        differ(t) 
+    elif "autofs" in eachfile: 
+        file_name="autofs.conf"
+        t=open(os.path.join(dir_path,file_name),"r")
+        differ(t) 
+    elif "ip6addrctl" in eachfile: 
+        file_name="ip6addrctl.conf"
+        t=open(os.path.join(dir_path,file_name),"r")
+        differ(t)             
+    elif "ntp-restrict" in eachfile: 
+        file_name="ntp-restrict.conf"
+        t=open(os.path.join(dir_path,file_name),"r")
+        differ(t) 
+    elif "rtadvd" in eachfile: 
+        file_name="rtadvd.conf"
+        t=open(os.path.join(dir_path,file_name),"r")
+        differ(t)
+    else:
+        tmpa=open("tmp", "a")
+        print >>tmpa,"*", eachfile, "has no corresponding authority file to compare to!!!!!"
+        tmpa.close()         
+
+##Open tmp file, print lines with differences to Results.txt               
+with open("tmp","r") as tmp1, open('Results.txt','w') as Results1:          #Open Results.txt and tmp for writing                           
+    for line in tmp1:                                   #Selecting each line in the tmp file
+        if line.startswith('+') or line.startswith('-') or line.startswith('?') or line.startswith("DiffConfig"):
+            print >>Results1,"\t", line                 #Print lines starting with "+,-,?, and *"
+        elif line.startswith('*'):
+            print >>Results1, line 
+
+##Memory cleanup    
+tmp1.close()
+Results1.close()
+so.close()
+
+##Rename tmp to Full Report and open Results.txt in default program
+shutil.move("tmp","Full Report.txt")
+os.system("open Results.txt")
